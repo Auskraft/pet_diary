@@ -1,17 +1,113 @@
-# pet_diary
+# Дневник питомца (Pet Diary)
 
-A new Flutter project.
+Цифровой дневник и паспорт питомца: вся история жизни — здоровье, уход, документы,
+заметки, события и напоминания — в одном месте. Это не медицинская база, а спокойное
+«личное пространство питомца»: companion / memory / care-приложение.
 
-## Getting Started
+> **Статус:** MVP-прототип. Приложение **локальное, без авторизации** — данные пока
+> захардкожены в `lib/data/mock_data.dart`. UI реализован полностью (все 19 экранов из
+> hi-fi дизайн-хэндоффа), бизнес-логика хранения/синхронизации — на следующих итерациях.
 
-This project is a starting point for a Flutter application.
+---
 
-A few resources to get you started if this is your first Flutter project:
+## Возможности
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- **5 разделов** в нижней навигации: Обзор · Питомцы · Здоровье · Уход · Профиль.
+- **Event-driven модель**: всё (прививка, визит, кормление, вес, заметка…) — это `Event`.
+  Разделы Здоровье / Уход / История — представления над общим потоком событий.
+- **Светлая и тёмная темы** с точными токенами из дизайн-системы, мягкое переключение.
+- **Локализация RU / EN** с переключением «на лету» (включая форматы дат/чисел).
+- **Мультипитомец** с глобальным «активным питомцем».
+- **19 экранов**: обзор, список питомцев, карточка-паспорт, добавление питомца,
+  документы + просмотр, здоровье (категории → записи → деталь), уход + кормление,
+  таймлайн с фильтрами, поиск, добавление/деталь события, напоминания (4 состояния),
+  профиль, язык, темы, бэкап (Яндекс.Диск, состояния + OAuth), экспорт, состояния
+  (пусто/загрузка/ошибка/офлайн), онбординг, дизайн-система, тёмная витрина.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Экраны-витрины (дизайн-система, состояния, тёмная витрина, онбординг) доступны из
+**Профиль → «Дизайн и экраны»**.
+
+---
+
+## Технологии
+
+| Слой | Выбор |
+|---|---|
+| Framework | Flutter 3.41.7 / Dart 3.11.5 |
+| State management | `flutter_bloc` (Cubit) + `equatable` |
+| Шрифт | `google_fonts` (Nunito — rounded-fallback к SF Pro) |
+| Иконки | `lucide_icons` (тонкий outline-набор) |
+| Хранилище настроек | `shared_preferences` (тема, язык) |
+| Форматирование | `intl` |
+
+---
+
+## Запуск
+
+```bash
+flutter pub get
+flutter run        # с подключённым устройством или эмулятором
+```
+
+Либо кнопка ▶️ в Android Studio / VS Code.
+
+### Полезные команды
+
+```bash
+flutter analyze          # статический анализ (должен быть чистым)
+flutter test             # юнит/виджет-тесты
+flutter build apk --debug
+flutter build bundle     # компиляция всего Dart без Gradle (быстрая проверка)
+```
+
+### Troubleshooting: `Unable to establish loopback connection`
+
+Если Gradle падает с этой ошибкой — это **не код**, а блокировка TCP-loopback
+(антивирус/файрвол или закомментированный `localhost` в hosts). Решения:
+
+1. Открыть `C:\Windows\System32\drivers\etc\hosts` **от администратора** и
+   раскомментировать строку `127.0.0.1  localhost`.
+2. Разрешить `java.exe` (loopback-соединения) в файрволе/антивирусе.
+3. Флаг `-Djava.net.preferIPv4Stack=true` уже добавлен в `android/gradle.properties`
+   — для CLI этого часто достаточно.
+
+---
+
+## Структура проекта
+
+```
+lib/
+├── main.dart                 # точка входа: SharedPreferences + MultiBlocProvider
+├── app.dart                  # MaterialApp (тема/локаль/themeMode), home = MainShell
+├── core/
+│   ├── app_icons.dart        # appIcon('name') → Lucide IconData
+│   ├── l10n/app_strings.dart # enum Lang + AppStrings i18n-таблица
+│   └── theme/                # app_colors, app_dimens, app_text, app_theme
+├── data/
+│   ├── models.dart           # Pet, PetEvent, Reminder, AppDocument, CategoryTile…
+│   └── mock_data.dart        # захардкоженные данные прототипа (= data.jsx хэндоффа)
+├── logic/                    # ThemeCubit, LocaleCubit, ActivePetCubit, NavCubit
+├── widgets/                  # общая UI-библиотека (app_widgets, bottom_nav, sheets…)
+└── screens/                  # экраны по фичам (overview, pets, health, care, …)
+```
+
+Подробности — в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+---
+
+## Документы
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — техническая архитектура, токены, конвенции,
+  гайды «как добавить экран / тип события / строку».
+- [design_prompt.md](design_prompt.md) — дизайн-бриф (промт для генерации UI).
+
+---
+
+## Дорожная карта
+
+- [ ] Локальная БД (drift / isar) за слоем репозиториев вместо мок-данных.
+- [ ] Реальные локальные уведомления для напоминаний (`flutter_local_notifications`).
+- [ ] Файлы/фото: загрузка с устройства, превью, очередь, бэкап на Яндекс.Диск.
+- [ ] Экспорт паспорта/истории в PDF и текстовый отчёт.
+- [ ] Бандл шрифта Nunito в `assets` для полного офлайна.
+- [ ] (Позже) аккаунты, синхронизация, совместный доступ (`SharedUser`).
